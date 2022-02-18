@@ -1,0 +1,70 @@
+# action.yml
+name: 'kustomize-deploy'
+description: 'Updates a images overwrite in a kustomizer repository'
+inputs:
+  repo: 
+    description: 'Repository to update'
+    required: true
+  branch:
+    description: 'the branch to update'
+    required: false
+    default: "master"
+  ssh-key: 
+    description: 'ssh key to authenticate to the repository with (needs to have read/write)'
+    required: true
+  target:
+    description: 'path to the kustomize to update'
+    required: true
+  image:
+    description: 'the image that will be updated with the given tag'
+    required: true
+  tag:
+    description: 'the tag that the given image will be set too'
+    required: true
+  git-email:
+    description: 'email of git committer '
+    required: true
+  git-user:
+    description: 'username of the git commiter'
+    required: true
+  git-ref-name:
+    description: 'the ref that triggered the deploy that will be included in the git commit'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+  - name: Check out code
+    uses: actions/checkout@v2
+    with:
+      repository: ${{ inputs.repo }}
+      ref: ${{ inputs.branch }}
+      ssh-key: ${{ inputs.ssh-key }}
+
+  - name: Setup Kustomize
+    uses: imranismail/setup-kustomize@v1
+    with:
+      kustomize-version: "4.4.0"
+
+  - run:  | 
+      cd $TARGET
+      kustomize edit set image $IMAGE=:$TAG
+      cat kustomization.yml
+    shell: bash
+    env:
+      TARGET: ${{ inputs.target }}
+      IMAGE: ${{ inputs.image }}
+      TAG: ${{ inputs.tag }}
+      
+  - run: |
+      git config --local user.email "$GIT_EMAIL"
+      git config --local user.name "$GIT_USER"
+      git commit -am "Deploy: $GIT_REPO $GIT_REF_NAME $TAG"
+      git push
+    shell: bash
+    env:
+      GIT_EMAIL: ${{ inputs.git-email }}
+      GIT_USER: ${{ inputs.get-user }}    
+      GIT_REPO: ${{ inputs.repo }}
+      GIT_REF_NAME: ${{ inputs.git-ref-name }}
+      TAG: ${{ inputs.tag }}
