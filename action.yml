@@ -64,7 +64,7 @@ runs:
     shell: bash
     env:
       GIT_EMAIL: ${{ inputs.git-email }}
-      GIT_USER: ${{ inputs.get-user }}    
+      GIT_USER: ${{ inputs.git-user }}    
       GIT_REPO: ${{ inputs.repo }}
       GIT_REF_NAME: ${{ inputs.git-ref-name }}
       TAG: ${{ inputs.tag }}
